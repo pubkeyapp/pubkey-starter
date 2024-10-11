@@ -1,9 +1,9 @@
+import { toastError } from '@/components/ui'
 import { clusterApiUrl, Connection } from '@solana/web3.js'
 
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { createContext, ReactNode, useContext } from 'react'
-import toast from 'react-hot-toast'
 
 export interface Cluster {
   name: string
@@ -79,7 +79,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         new Connection(cluster.endpoint)
         setClusters([...clusters, cluster])
       } catch (err) {
-        toast.error(`${err}`)
+        toastError(`${err}`)
       }
     },
     deleteCluster: (cluster: Cluster) => {

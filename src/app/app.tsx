@@ -1,3 +1,4 @@
+import { AppTheme } from '@/app/app-theme.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ClusterProvider } from '../components/cluster/cluster-data-access'
 import { SolanaProvider } from '../components/solana/solana-provider'
@@ -9,9 +10,11 @@ export function App() {
   return (
     <QueryClientProvider client={client}>
       <ClusterProvider>
-        <SolanaProvider>
-          <AppRoutes />
-        </SolanaProvider>
+        <AppTheme>
+          <SolanaProvider>
+            <AppRoutes />
+          </SolanaProvider>
+        </AppTheme>
       </ClusterProvider>
     </QueryClientProvider>
   )

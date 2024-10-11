@@ -13,7 +13,6 @@ export default defineConfig({
         manualChunks: {
           jotai: ['jotai'],
           react: ['react', 'react-dom'],
-          reactHotToast: ['react-hot-toast'],
           reactRouter: ['react-router', 'react-router-dom'],
           solanaWeb3: ['@solana/web3.js'],
           solanaWalletAdapters: [

@@ -1,22 +1,18 @@
+import { ActionIcon, Anchor, Button, Group, Menu, Select, Table, Text, TextInput } from '@mantine/core'
 import { useConnection } from '@solana/wallet-adapter-react'
 import { Connection } from '@solana/web3.js'
 import { IconTrash } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
-import { AppModal } from '../ui/ui-layout'
+import { AppModal, UiAlert } from '../ui/ui-layout'
 import { ClusterNetwork, useCluster } from './cluster-data-access'
 
-export function ExplorerLink({ path, label, className }: { path: string; label: string; className?: string }) {
+export function ExplorerLink({ path, label }: { path: string; label: string }) {
   const { getExplorerUrl } = useCluster()
   return (
-    <a
-      href={getExplorerUrl(path)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={className ? className : `link font-mono`}
-    >
+    <Anchor href={getExplorerUrl(path)} target="_blank" rel="noopener noreferrer" ff="monospace">
       {label}
-    </a>
+    </Anchor>
   )
 }
 
@@ -34,14 +30,14 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
   }
   if (query.isError || !query.data) {
     return (
-      <div className="alert alert-warning text-warning-content/80 rounded-none flex justify-center">
-        <span>
-          Error connecting to cluster <strong>{cluster.name}</strong>
-        </span>
-        <button className="btn btn-xs btn-neutral" onClick={() => query.refetch()}>
-          Refresh
-        </button>
-      </div>
+      <UiAlert
+        refresh={() => query.refetch()}
+        title={
+          <span>
+            Error connecting to cluster <strong>{cluster.name}</strong>
+          </span>
+        }
+      />
     )
   }
   return children
@@ -50,23 +46,44 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
 export function ClusterUiSelect() {
   const { clusters, setCluster, cluster } = useCluster()
   return (
-    <div className="dropdown dropdown-end">
-      <label tabIndex={0} className="btn btn-primary rounded-btn">
-        {cluster.name}
-      </label>
-      <ul tabIndex={0} className="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52 mt-4">
-        {clusters.map((item) => (
-          <li key={item.name}>
-            <button
-              className={`btn btn-sm ${item.active ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setCluster(item)}
-            >
-              {item.name}
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div>
+      <UiDropdown
+        label={cluster.name}
+        items={clusters.map((cluster) => {
+          return {
+            label: cluster.name,
+            active: cluster.active,
+            onClick: () => {
+              setCluster(cluster)
+            },
+          }
+        })}
+      />
     </div>
+  )
+}
+
+function UiDropdown({
+  label,
+  items,
+}: {
+  label: string
+  items: { active?: boolean; label: string; onClick: () => void }[]
+}) {
+  return (
+    <Menu shadow="md" width={200}>
+      <Menu.Target>
+        <Button>{label}</Button>
+      </Menu.Target>
+
+      <Menu.Dropdown>
+        {items.map((item) => (
+          <Menu.Item key={item.label} onClick={() => item.onClick()} disabled={item.active}>
+            {item.label}
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
   )
 }
 
@@ -96,30 +113,18 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
       }}
       submitLabel="Save"
     >
-      <input
-        type="text"
-        placeholder="Name"
-        className="input input-bordered w-full"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Endpoint"
-        className="input input-bordered w-full"
-        value={endpoint}
-        onChange={(e) => setEndpoint(e.target.value)}
-      />
-      <select
-        className="select select-bordered w-full"
+      <TextInput type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+      <TextInput type="text" placeholder="Endpoint" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} />
+      <Select
         value={network}
-        onChange={(e) => setNetwork(e.target.value as ClusterNetwork)}
-      >
-        <option value={undefined}>Select a network</option>
-        <option value={ClusterNetwork.Devnet}>Devnet</option>
-        <option value={ClusterNetwork.Testnet}>Testnet</option>
-        <option value={ClusterNetwork.Mainnet}>Mainnet</option>
-      </select>
+        onChange={(e) => setNetwork(e as ClusterNetwork)}
+        placeholder="Select a network"
+        data={[
+          { value: ClusterNetwork.Devnet, label: 'Devnet' },
+          { value: ClusterNetwork.Testnet, label: 'Testnet' },
+          { value: ClusterNetwork.Mainnet, label: 'Mainnet' },
+        ]}
+      />
     </AppModal>
   )
 }
@@ -127,48 +132,42 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
 export function ClusterUiTable() {
   const { clusters, setCluster, deleteCluster } = useCluster()
   return (
-    <div className="overflow-x-auto">
-      <table className="table border-4 border-separate border-base-300">
-        <thead>
-          <tr>
-            <th>Name/ Network / Endpoint</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clusters.map((item) => (
-            <tr key={item.name} className={item?.active ? 'bg-base-200' : ''}>
-              <td className="space-y-2">
-                <div className="whitespace-nowrap space-x-2">
-                  <span className="text-xl">
-                    {item?.active ? (
-                      item.name
-                    ) : (
-                      <button title="Select cluster" className="link link-secondary" onClick={() => setCluster(item)}>
-                        {item.name}
-                      </button>
-                    )}
-                  </span>
-                </div>
-                <span className="text-xs">Network: {item.network ?? 'custom'}</span>
-                <div className="whitespace-nowrap text-gray-500 text-xs">{item.endpoint}</div>
-              </td>
-              <td className="space-x-2 whitespace-nowrap text-center">
-                <button
-                  disabled={item?.active}
-                  className="btn btn-xs btn-default btn-outline"
-                  onClick={() => {
-                    if (!window.confirm('Are you sure?')) return
-                    deleteCluster(item)
-                  }}
-                >
-                  <IconTrash size={16} />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Name/ Network / Endpoint</Table.Th>
+          <Table.Th ta="center">Actions</Table.Th>
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {clusters.map((item) => (
+          <Table.Tr key={item.name}>
+            <Table.Td>
+              <Group wrap="nowrap">
+                <Button disabled={item.active} title="Select cluster" variant="light" onClick={() => setCluster(item)}>
+                  {item.name}
+                </Button>
+              </Group>
+              <Text size="xs">Network: {item.network ?? 'custom'}</Text>
+              <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                {item.endpoint}
+              </Text>
+            </Table.Td>
+            <Table.Td ta="center">
+              <ActionIcon
+                disabled={item?.active}
+                variant="outline"
+                onClick={() => {
+                  if (!window.confirm('Are you sure?')) return
+                  deleteCluster(item)
+                }}
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
+            </Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
   )
 }

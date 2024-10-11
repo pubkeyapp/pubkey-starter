@@ -1,5 +1,6 @@
+import { Box, Container } from '@mantine/core'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Navigate } from 'react-router'
+import { Navigate } from 'react-router-dom'
 import { WalletButton } from '../solana/solana-provider'
 
 export default function AccountListFeature() {
@@ -10,10 +11,10 @@ export default function AccountListFeature() {
   }
 
   return (
-    <div className="hero py-[64px]">
-      <div className="hero-content text-center">
+    <Box py={64}>
+      <Container size="sm" ta="center">
         <WalletButton />
-      </div>
-    </div>
+      </Container>
+    </Box>
   )
 }
